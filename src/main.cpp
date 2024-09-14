@@ -17,7 +17,7 @@ int argmax(vector<int> weights) {
     return outputSign;
 }
 
-// Sigmoid derivative function for discrete values
+// Sigmoid and its derivative
 double sigmoid(double x) {
     return 1.0 / (1.0 + exp(-x));
 }
@@ -140,55 +140,54 @@ public:
     }
 
     // Backpropagation using the discrete sigmoid
-    void backpropagation(int predicted, int actual) {
+    void backpropagation(int predicted, int actual, double learningRate) {
         int error = actual - predicted;
 
         if (error != 0) {
             // Update the weights using the DiscreteSigmoid function
             for (auto& perceptron : perceptronsClass0) {
                 for (auto& weight : perceptron.inputs) {
-                    // Calculate the gradient using the discrete sigmoid function
-                    int sigmoidDerivative = DiscreteSigmoid(weight);
+                    // Apply the weight update based on the discrete sigmoid
+                    double sigmoidOutput = sigmoid((double)weight);
+                    double update = learningRate * error * sigmoidOutput * (1 - sigmoidOutput);
 
-                    // Update the weight based on the gradient
-                    if (sigmoidDerivative > 0) {
-                        weight += error * sigmoidDerivative;
-                    } else {
-                        weight -= error * sigmoidDerivative;
+                    // Apply update to the weight
+                    if (update > 0.5) {
+                        weight = 1;  // Move weight closer to 1
+                    } else if (update < -0.5) {
+                        weight = -1; // Move weight closer to -1
                     }
-
-                    // Ensure the weight remains -1 or 1
-                    weight = (weight > 0) ? 1 : -1;
                 }
             }
 
             for (auto& perceptron : perceptronsClass1) {
                 for (auto& weight : perceptron.inputs) {
-                    // Calculate the gradient using the discrete sigmoid function
-                    int sigmoidDerivative = DiscreteSigmoid(weight);
+                    // Apply the weight update based on the discrete sigmoid
+                    double sigmoidOutput = sigmoid((double)weight);
+                    double update = learningRate * error * sigmoidOutput * (1 - sigmoidOutput);
 
-                    // Update the weight based on the gradient
-                    if (sigmoidDerivative > 0) {
-                        weight += error * sigmoidDerivative;
-                    } else {
-                        weight -= error * sigmoidDerivative;
+                    // Apply update to the weight
+                    if (update > 0.5) {
+                        weight = 1;
+                    } else if (update < -0.5) {
+                        weight = -1;
                     }
-
-                    // Ensure the weight remains -1 or 1
-                    weight = (weight > 0) ? 1 : -1;
                 }
             }
         }
     }
 
-    // Forward pass on the entire dataset and backpropagation
-    void train(vector<vector<int>>& dataset, vector<int>& labels, int epochs) {
+    // Train on the entire dataset
+    void train(vector<vector<int>>& dataset, vector<int>& labels, int epochs, double learningRate) {
         for (int epoch = 0; epoch < epochs; epoch++) {
             for (int i = 0; i < (int)dataset.size(); i++) {
                 this->inputs = dataset[i];
                 int predicted = forward();
+                if (predicted == -1){
+                  predicted = 0;
+                }
                 int actual = labels[i];
-                backpropagation(predicted, actual);
+                backpropagation(predicted, actual, learningRate);
             }
         }
     }
@@ -212,7 +211,8 @@ int main() {
 
     NeuralNet neuralNet(inputBytes[0]); // Initialize with first input
 
-    neuralNet.train(inputBytes, labels, 2);
+    // Train the model for 10 epochs with a learning rate of 0.1
+    neuralNet.train(inputBytes, labels, 3, 0.1);
     for (auto aa: neuralNet.perceptronsClass0){
       for (auto b: aa.inputs){
         cout << b << " ";
