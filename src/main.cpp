@@ -2,8 +2,7 @@
 using namespace std;
 
 int sign(int x) {
-    if (x == 0) return -1;
-    else return x / abs(x); // Ensures sign is -1 or 1
+    return (x >= 0) ? 1 : -1;
 }
 
 int argmax(vector<int> weights) {
@@ -15,21 +14,22 @@ int argmax(vector<int> weights) {
             outputSign = sign(weight);
         }
     }
-    if (outputSign == 1) return 1;
-    else return -1;
+    return outputSign;
 }
 
+// Sigmoid derivative function for discrete values
 double sigmoid(double x) {
-    return 1 / (1 + exp(-x));
+    return 1.0 / (1.0 + exp(-x));
 }
 
 double sigmoidPD(double x) {
     return sigmoid(x) * (1 - sigmoid(x));
 }
 
-int discreteSigmoid(int weight) {
-    double sigmoidPDOutput = sigmoidPD((double)weight);
-    return (sigmoidPDOutput < 0.5) ? 0 : 1;
+// Discrete sigmoid derivative based on the discrete output of weights
+int DiscreteSigmoid(int weight) {
+    double SigmoidPDOutput = sigmoidPD((double)weight);
+    return (SigmoidPDOutput < 0.5) ? 0 : 1;
 }
 
 int inputSign(const vector<int>& weights, const vector<int>& input) {
@@ -93,6 +93,7 @@ public:
     SumNode class0;
     SumNode class1;
     ArgmaxNode output;
+    
     NeuralNet(vector<int> inputs) {
         this->inputs = inputs;
         // Initialize perceptrons for both classes with random weights (-1 or 1)
@@ -138,22 +139,49 @@ public:
         return output.Calculate(sumOutputs);
     }
 
+    // Backpropagation using the discrete sigmoid
     void backpropagation(int predicted, int actual) {
         int error = actual - predicted;
+
         if (error != 0) {
+            // Update the weights using the DiscreteSigmoid function
             for (auto& perceptron : perceptronsClass0) {
                 for (auto& weight : perceptron.inputs) {
-                    weight = (weight == 1) ? -1 : 1; // Flip between -1 and 1
+                    // Calculate the gradient using the discrete sigmoid function
+                    int sigmoidDerivative = DiscreteSigmoid(weight);
+
+                    // Update the weight based on the gradient
+                    if (sigmoidDerivative > 0) {
+                        weight += error * sigmoidDerivative;
+                    } else {
+                        weight -= error * sigmoidDerivative;
+                    }
+
+                    // Ensure the weight remains -1 or 1
+                    weight = (weight > 0) ? 1 : -1;
                 }
             }
+
             for (auto& perceptron : perceptronsClass1) {
                 for (auto& weight : perceptron.inputs) {
-                    weight = (weight == 1) ? -1 : 1; // Flip between -1 and 1
+                    // Calculate the gradient using the discrete sigmoid function
+                    int sigmoidDerivative = DiscreteSigmoid(weight);
+
+                    // Update the weight based on the gradient
+                    if (sigmoidDerivative > 0) {
+                        weight += error * sigmoidDerivative;
+                    } else {
+                        weight -= error * sigmoidDerivative;
+                    }
+
+                    // Ensure the weight remains -1 or 1
+                    weight = (weight > 0) ? 1 : -1;
                 }
             }
         }
     }
 
+    // Forward pass on the entire dataset and backpropagation
     void train(vector<vector<int>>& dataset, vector<int>& labels, int epochs) {
         for (int epoch = 0; epoch < epochs; epoch++) {
             for (int i = 0; i < (int)dataset.size(); i++) {
@@ -182,18 +210,18 @@ int main() {
         labels.push_back(label);
     }
 
-    NeuralNet neuralNet(inputBytes[0]);
+    NeuralNet neuralNet(inputBytes[0]); // Initialize with first input
 
-    neuralNet.train(inputBytes, labels, 10); // Train for 10 epochs
-    for (auto weights0: neuralNet.perceptronsClass0){
-      for (auto weight: weights0.inputs){
-        cout << weight << " ";
+    neuralNet.train(inputBytes, labels, 2);
+    for (auto aa: neuralNet.perceptronsClass0){
+      for (auto b: aa.inputs){
+        cout << b << " ";
       }
       cout << "\n";
     }
-    for (auto weights1: neuralNet.perceptronsClass1){
-      for (auto weight: weights1.inputs){
-        cout << weight << " ";
+    for (auto aa: neuralNet.perceptronsClass1){
+      for (auto b: aa.inputs){
+        cout << b << " ";
       }
       cout << "\n";
     }
