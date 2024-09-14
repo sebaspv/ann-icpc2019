@@ -211,8 +211,7 @@ int main() {
 
     NeuralNet neuralNet(inputBytes[0]); // Initialize with first input
 
-    // Train the model for 10 epochs with a learning rate of 0.1
-    neuralNet.train(inputBytes, labels, 3, 0.1);
+    neuralNet.train(inputBytes, labels, 5, 0.1);
     for (auto aa: neuralNet.perceptronsClass0){
       for (auto b: aa.inputs){
         cout << b << " ";
